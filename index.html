@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>ChatBot Teste JavaScript Pizzaria</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col">
+        <h1 class="text-center my-3">ChatBot Teste JavaScript Pizzaria</h1>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <div id="chatBox" class="border rounded p-3 mb-3" style="height: 400px; overflow-y: scroll;"></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col">
+        <form id="mensagemForm" class="form-inline">
+          <input type="text" id="mensagemInput" class="form-control flex-grow-1" placeholder="Digite sua mensagem..."
+            required>
+          <button type="submit" class="btn btn-primary ml-3">Enviar</button>
+        </form>
+      </div>
+    </div>
+    <div class="row mt-3">
+      <div class="col">
+        <form id="feedbackForm" class="form-inline">
+          <input type="number" id="pedidoIdInput" class="form-control" placeholder="Código do pedido" required>
+          <input type="text" id="feedbackInput" class="form-control ml-3" placeholder="Deixe seu feedback..." required>
+          <button type="submit" class="btn btn-secondary ml-3">Enviar Feedback</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on('resposta', (mensagem) => {
+      const chatBox = document.getElementById('chatBox');
+      chatBox.innerHTML += `<p>Pizzaria: ${mensagem}</p>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    socket.on('userMessage', (mensagem) => {
+      const chatBox = document.getElementById('chatBox');
+      chatBox.innerHTML += `<p>${mensagem}</p>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    const mensagemForm = document.getElementById('mensagemForm');
+    mensagemForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const mensagemInput = document.getElementById('mensagemInput');
+      const mensagem = mensagemInput.value;
+      mensagemInput.value = '';
+      socket.emit('mensagem', mensagem);
+    });
+
+    const feedbackForm = document.getElementById('feedbackForm');
+    feedbackForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pedidoIdInput = document.getElementById('pedidoIdInput');
+      const feedbackInput = document.getElementById('feedbackInput');
+      const pedidoId = pedidoIdInput.value;
+      const feedback = feedbackInput.value;
+      feedbackInput.value = '';
+      pedidoIdInput.value = '';
+
+      fetch('/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `pedidoId=${encodeURIComponent(pedidoId)}&feedback=${encodeURIComponent(feedback)}`
+      }).then(response => {
+        if (response.ok) {
+          alert('Obrigado pelo seu feedback!');
+        } else {
+          alert('Houve um erro ao enviar seu feedback. Por favor, certifique-se de que o código do pedido está correto e tente novamente.');
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>
